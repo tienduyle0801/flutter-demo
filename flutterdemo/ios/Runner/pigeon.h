@@ -10,29 +10,28 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class MemoryResult;
+@class SumRequest;
+@class SumReply;
 
-@interface MemoryResult : NSObject
-+ (instancetype)makeWithUsedMemory:(nullable NSNumber *)usedMemory;
-@property(nonatomic, strong, nullable) NSNumber * usedMemory;
+@interface SumRequest : NSObject
++ (instancetype)makeWithA:(nullable NSNumber *)a
+    b:(nullable NSNumber *)b;
+@property(nonatomic, strong, nullable) NSNumber * a;
+@property(nonatomic, strong, nullable) NSNumber * b;
 @end
 
-/// The codec used by MemoryApi.
-NSObject<FlutterMessageCodec> *MemoryApiGetCodec(void);
-
-@protocol MemoryApi
-/// @return `nil` only when `error != nil`.
-- (nullable MemoryResult *)getMemoryInfoWithError:(FlutterError *_Nullable *_Nonnull)error;
+@interface SumReply : NSObject
++ (instancetype)makeWithResult:(nullable NSNumber *)result;
+@property(nonatomic, strong, nullable) NSNumber * result;
 @end
 
-extern void MemoryApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject<MemoryApi> *_Nullable api);
+/// The codec used by SumApi.
+NSObject<FlutterMessageCodec> *SumApiGetCodec(void);
 
-/// The codec used by MemoryCallback.
-NSObject<FlutterMessageCodec> *MemoryCallbackGetCodec(void);
-
-@interface MemoryCallback : NSObject
-- (instancetype)initWithBinaryMessenger:(id<FlutterBinaryMessenger>)binaryMessenger;
-- (void)onReceivedMemoryInfoResult:(MemoryResult *)result completion:(void (^)(FlutterError *_Nullable))completion;
+@protocol SumApi
+- (nullable SumReply *)sumRequest:(SumRequest *)request error:(FlutterError *_Nullable *_Nonnull)error;
 @end
+
+extern void SumApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject<SumApi> *_Nullable api);
 
 NS_ASSUME_NONNULL_END

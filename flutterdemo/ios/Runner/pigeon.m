@@ -21,52 +21,88 @@ static id GetNullableObjectAtIndex(NSArray *array, NSInteger key) {
   return (result == [NSNull null]) ? nil : result;
 }
 
-@interface MemoryResult ()
-+ (MemoryResult *)fromList:(NSArray *)list;
-+ (nullable MemoryResult *)nullableFromList:(NSArray *)list;
+@interface SumRequest ()
++ (SumRequest *)fromList:(NSArray *)list;
++ (nullable SumRequest *)nullableFromList:(NSArray *)list;
 - (NSArray *)toList;
 @end
 
-@implementation MemoryResult
-+ (instancetype)makeWithUsedMemory:(nullable NSNumber *)usedMemory {
-  MemoryResult* pigeonResult = [[MemoryResult alloc] init];
-  pigeonResult.usedMemory = usedMemory;
+@interface SumReply ()
++ (SumReply *)fromList:(NSArray *)list;
++ (nullable SumReply *)nullableFromList:(NSArray *)list;
+- (NSArray *)toList;
+@end
+
+@implementation SumRequest
++ (instancetype)makeWithA:(nullable NSNumber *)a
+    b:(nullable NSNumber *)b {
+  SumRequest* pigeonResult = [[SumRequest alloc] init];
+  pigeonResult.a = a;
+  pigeonResult.b = b;
   return pigeonResult;
 }
-+ (MemoryResult *)fromList:(NSArray *)list {
-  MemoryResult *pigeonResult = [[MemoryResult alloc] init];
-  pigeonResult.usedMemory = GetNullableObjectAtIndex(list, 0);
++ (SumRequest *)fromList:(NSArray *)list {
+  SumRequest *pigeonResult = [[SumRequest alloc] init];
+  pigeonResult.a = GetNullableObjectAtIndex(list, 0);
+  pigeonResult.b = GetNullableObjectAtIndex(list, 1);
   return pigeonResult;
 }
-+ (nullable MemoryResult *)nullableFromList:(NSArray *)list {
-  return (list) ? [MemoryResult fromList:list] : nil;
++ (nullable SumRequest *)nullableFromList:(NSArray *)list {
+  return (list) ? [SumRequest fromList:list] : nil;
 }
 - (NSArray *)toList {
   return @[
-    (self.usedMemory ?: [NSNull null]),
+    (self.a ?: [NSNull null]),
+    (self.b ?: [NSNull null]),
   ];
 }
 @end
 
-@interface MemoryApiCodecReader : FlutterStandardReader
+@implementation SumReply
++ (instancetype)makeWithResult:(nullable NSNumber *)result {
+  SumReply* pigeonResult = [[SumReply alloc] init];
+  pigeonResult.result = result;
+  return pigeonResult;
+}
++ (SumReply *)fromList:(NSArray *)list {
+  SumReply *pigeonResult = [[SumReply alloc] init];
+  pigeonResult.result = GetNullableObjectAtIndex(list, 0);
+  return pigeonResult;
+}
++ (nullable SumReply *)nullableFromList:(NSArray *)list {
+  return (list) ? [SumReply fromList:list] : nil;
+}
+- (NSArray *)toList {
+  return @[
+    (self.result ?: [NSNull null]),
+  ];
+}
 @end
-@implementation MemoryApiCodecReader
+
+@interface SumApiCodecReader : FlutterStandardReader
+@end
+@implementation SumApiCodecReader
 - (nullable id)readValueOfType:(UInt8)type {
   switch (type) {
     case 128: 
-      return [MemoryResult fromList:[self readValue]];
+      return [SumReply fromList:[self readValue]];
+    case 129: 
+      return [SumRequest fromList:[self readValue]];
     default:
       return [super readValueOfType:type];
   }
 }
 @end
 
-@interface MemoryApiCodecWriter : FlutterStandardWriter
+@interface SumApiCodecWriter : FlutterStandardWriter
 @end
-@implementation MemoryApiCodecWriter
+@implementation SumApiCodecWriter
 - (void)writeValue:(id)value {
-  if ([value isKindOfClass:[MemoryResult class]]) {
+  if ([value isKindOfClass:[SumReply class]]) {
     [self writeByte:128];
+    [self writeValue:[value toList]];
+  } else if ([value isKindOfClass:[SumRequest class]]) {
+    [self writeByte:129];
     [self writeValue:[value toList]];
   } else {
     [super writeValue:value];
@@ -74,39 +110,41 @@ static id GetNullableObjectAtIndex(NSArray *array, NSInteger key) {
 }
 @end
 
-@interface MemoryApiCodecReaderWriter : FlutterStandardReaderWriter
+@interface SumApiCodecReaderWriter : FlutterStandardReaderWriter
 @end
-@implementation MemoryApiCodecReaderWriter
+@implementation SumApiCodecReaderWriter
 - (FlutterStandardWriter *)writerWithData:(NSMutableData *)data {
-  return [[MemoryApiCodecWriter alloc] initWithData:data];
+  return [[SumApiCodecWriter alloc] initWithData:data];
 }
 - (FlutterStandardReader *)readerWithData:(NSData *)data {
-  return [[MemoryApiCodecReader alloc] initWithData:data];
+  return [[SumApiCodecReader alloc] initWithData:data];
 }
 @end
 
-NSObject<FlutterMessageCodec> *MemoryApiGetCodec() {
+NSObject<FlutterMessageCodec> *SumApiGetCodec() {
   static FlutterStandardMessageCodec *sSharedObject = nil;
   static dispatch_once_t sPred = 0;
   dispatch_once(&sPred, ^{
-    MemoryApiCodecReaderWriter *readerWriter = [[MemoryApiCodecReaderWriter alloc] init];
+    SumApiCodecReaderWriter *readerWriter = [[SumApiCodecReaderWriter alloc] init];
     sSharedObject = [FlutterStandardMessageCodec codecWithReaderWriter:readerWriter];
   });
   return sSharedObject;
 }
 
-void MemoryApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject<MemoryApi> *api) {
+void SumApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject<SumApi> *api) {
   {
     FlutterBasicMessageChannel *channel =
       [[FlutterBasicMessageChannel alloc]
-        initWithName:@"dev.flutter.pigeon.MemoryApi.getMemoryInfo"
+        initWithName:@"dev.flutter.pigeon.SumApi.sum"
         binaryMessenger:binaryMessenger
-        codec:MemoryApiGetCodec()];
+        codec:SumApiGetCodec()];
     if (api) {
-      NSCAssert([api respondsToSelector:@selector(getMemoryInfoWithError:)], @"MemoryApi api (%@) doesn't respond to @selector(getMemoryInfoWithError:)", api);
+      NSCAssert([api respondsToSelector:@selector(sumRequest:error:)], @"SumApi api (%@) doesn't respond to @selector(sumRequest:error:)", api);
       [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
+        NSArray *args = message;
+        SumRequest *arg_request = GetNullableObjectAtIndex(args, 0);
         FlutterError *error;
-        MemoryResult *output = [api getMemoryInfoWithError:&error];
+        SumReply *output = [api sumRequest:arg_request error:&error];
         callback(wrapResult(output, error));
       }];
     } else {
@@ -114,75 +152,3 @@ void MemoryApiSetup(id<FlutterBinaryMessenger> binaryMessenger, NSObject<MemoryA
     }
   }
 }
-@interface MemoryCallbackCodecReader : FlutterStandardReader
-@end
-@implementation MemoryCallbackCodecReader
-- (nullable id)readValueOfType:(UInt8)type {
-  switch (type) {
-    case 128: 
-      return [MemoryResult fromList:[self readValue]];
-    default:
-      return [super readValueOfType:type];
-  }
-}
-@end
-
-@interface MemoryCallbackCodecWriter : FlutterStandardWriter
-@end
-@implementation MemoryCallbackCodecWriter
-- (void)writeValue:(id)value {
-  if ([value isKindOfClass:[MemoryResult class]]) {
-    [self writeByte:128];
-    [self writeValue:[value toList]];
-  } else {
-    [super writeValue:value];
-  }
-}
-@end
-
-@interface MemoryCallbackCodecReaderWriter : FlutterStandardReaderWriter
-@end
-@implementation MemoryCallbackCodecReaderWriter
-- (FlutterStandardWriter *)writerWithData:(NSMutableData *)data {
-  return [[MemoryCallbackCodecWriter alloc] initWithData:data];
-}
-- (FlutterStandardReader *)readerWithData:(NSData *)data {
-  return [[MemoryCallbackCodecReader alloc] initWithData:data];
-}
-@end
-
-NSObject<FlutterMessageCodec> *MemoryCallbackGetCodec() {
-  static FlutterStandardMessageCodec *sSharedObject = nil;
-  static dispatch_once_t sPred = 0;
-  dispatch_once(&sPred, ^{
-    MemoryCallbackCodecReaderWriter *readerWriter = [[MemoryCallbackCodecReaderWriter alloc] init];
-    sSharedObject = [FlutterStandardMessageCodec codecWithReaderWriter:readerWriter];
-  });
-  return sSharedObject;
-}
-
-@interface MemoryCallback ()
-@property(nonatomic, strong) NSObject<FlutterBinaryMessenger> *binaryMessenger;
-@end
-
-@implementation MemoryCallback
-
-- (instancetype)initWithBinaryMessenger:(NSObject<FlutterBinaryMessenger> *)binaryMessenger {
-  self = [super init];
-  if (self) {
-    _binaryMessenger = binaryMessenger;
-  }
-  return self;
-}
-- (void)onReceivedMemoryInfoResult:(MemoryResult *)arg_result completion:(void (^)(FlutterError *_Nullable))completion {
-  FlutterBasicMessageChannel *channel =
-    [FlutterBasicMessageChannel
-      messageChannelWithName:@"dev.flutter.pigeon.MemoryCallback.onReceivedMemoryInfo"
-      binaryMessenger:self.binaryMessenger
-      codec:MemoryCallbackGetCodec()];
-  [channel sendMessage:@[arg_result ?: [NSNull null]] reply:^(id reply) {
-    completion(nil);
-  }];
-}
-@end
-

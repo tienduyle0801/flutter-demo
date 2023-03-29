@@ -32,37 +32,64 @@ private func wrapError(_ error: Any) -> [Any?] {
 }
 
 /// Generated class from Pigeon that represents data sent in messages.
-struct MemoryResult {
-  var usedMemory: Double? = nil
+struct SumRequest {
+  var a: Int64? = nil
+  var b: Int64? = nil
 
-  static func fromList(_ list: [Any]) -> MemoryResult? {
-    let usedMemory = list[0] as! Double? 
+  static func fromList(_ list: [Any]) -> SumRequest? {
+    let a = list[0] as! Int64? 
+    let b = list[1] as! Int64? 
 
-    return MemoryResult(
-      usedMemory: usedMemory
+    return SumRequest(
+      a: a,
+      b: b
     )
   }
   func toList() -> [Any?] {
     return [
-      usedMemory,
+      a,
+      b,
     ]
   }
 }
-private class MemoryApiCodecReader: FlutterStandardReader {
+
+/// Generated class from Pigeon that represents data sent in messages.
+struct SumReply {
+  var result: Int64? = nil
+
+  static func fromList(_ list: [Any]) -> SumReply? {
+    let result = list[0] as! Int64? 
+
+    return SumReply(
+      result: result
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      result,
+    ]
+  }
+}
+private class SumApiCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
       case 128:
-        return MemoryResult.fromList(self.readValue() as! [Any])
+        return SumReply.fromList(self.readValue() as! [Any])
+      case 129:
+        return SumRequest.fromList(self.readValue() as! [Any])
       default:
         return super.readValue(ofType: type)
     }
   }
 }
 
-private class MemoryApiCodecWriter: FlutterStandardWriter {
+private class SumApiCodecWriter: FlutterStandardWriter {
   override func writeValue(_ value: Any) {
-    if let value = value as? MemoryResult {
+    if let value = value as? SumReply {
       super.writeByte(128)
+      super.writeValue(value.toList())
+    } else if let value = value as? SumRequest {
+      super.writeByte(129)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -70,95 +97,45 @@ private class MemoryApiCodecWriter: FlutterStandardWriter {
   }
 }
 
-private class MemoryApiCodecReaderWriter: FlutterStandardReaderWriter {
+private class SumApiCodecReaderWriter: FlutterStandardReaderWriter {
   override func reader(with data: Data) -> FlutterStandardReader {
-    return MemoryApiCodecReader(data: data)
+    return SumApiCodecReader(data: data)
   }
 
   override func writer(with data: NSMutableData) -> FlutterStandardWriter {
-    return MemoryApiCodecWriter(data: data)
+    return SumApiCodecWriter(data: data)
   }
 }
 
-class MemoryApiCodec: FlutterStandardMessageCodec {
-  static let shared = MemoryApiCodec(readerWriter: MemoryApiCodecReaderWriter())
+class SumApiCodec: FlutterStandardMessageCodec {
+  static let shared = SumApiCodec(readerWriter: SumApiCodecReaderWriter())
 }
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
-protocol MemoryApi {
-  func getMemoryInfo() throws -> MemoryResult
+protocol SumApi {
+  func sum(request: SumRequest) throws -> SumReply?
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
-class MemoryApiSetup {
-  /// The codec used by MemoryApi.
-  static var codec: FlutterStandardMessageCodec { MemoryApiCodec.shared }
-  /// Sets up an instance of `MemoryApi` to handle messages through the `binaryMessenger`.
-  static func setUp(binaryMessenger: FlutterBinaryMessenger, api: MemoryApi?) {
-    let getMemoryInfoChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.MemoryApi.getMemoryInfo", binaryMessenger: binaryMessenger, codec: codec)
+class SumApiSetup {
+  /// The codec used by SumApi.
+  static var codec: FlutterStandardMessageCodec { SumApiCodec.shared }
+  /// Sets up an instance of `SumApi` to handle messages through the `binaryMessenger`.
+  static func setUp(binaryMessenger: FlutterBinaryMessenger, api: SumApi?) {
+    let sumChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.SumApi.sum", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
-      getMemoryInfoChannel.setMessageHandler { _, reply in
+      sumChannel.setMessageHandler { message, reply in
+        let args = message as! [Any]
+        let requestArg = args[0] as! SumRequest
         do {
-          let result = try api.getMemoryInfo()
+          let result = try api.sum(request: requestArg)
           reply(wrapResult(result))
         } catch {
           reply(wrapError(error))
         }
       }
     } else {
-      getMemoryInfoChannel.setMessageHandler(nil)
-    }
-  }
-}
-private class MemoryCallbackCodecReader: FlutterStandardReader {
-  override func readValue(ofType type: UInt8) -> Any? {
-    switch type {
-      case 128:
-        return MemoryResult.fromList(self.readValue() as! [Any])
-      default:
-        return super.readValue(ofType: type)
-    }
-  }
-}
-
-private class MemoryCallbackCodecWriter: FlutterStandardWriter {
-  override func writeValue(_ value: Any) {
-    if let value = value as? MemoryResult {
-      super.writeByte(128)
-      super.writeValue(value.toList())
-    } else {
-      super.writeValue(value)
-    }
-  }
-}
-
-private class MemoryCallbackCodecReaderWriter: FlutterStandardReaderWriter {
-  override func reader(with data: Data) -> FlutterStandardReader {
-    return MemoryCallbackCodecReader(data: data)
-  }
-
-  override func writer(with data: NSMutableData) -> FlutterStandardWriter {
-    return MemoryCallbackCodecWriter(data: data)
-  }
-}
-
-class MemoryCallbackCodec: FlutterStandardMessageCodec {
-  static let shared = MemoryCallbackCodec(readerWriter: MemoryCallbackCodecReaderWriter())
-}
-
-/// Generated class from Pigeon that represents Flutter messages that can be called from Swift.
-class MemoryCallback {
-  private let binaryMessenger: FlutterBinaryMessenger
-  init(binaryMessenger: FlutterBinaryMessenger){
-    self.binaryMessenger = binaryMessenger
-  }
-  var codec: FlutterStandardMessageCodec {
-    return MemoryCallbackCodec.shared
-  }
-  func onReceivedMemoryInfo(result resultArg: MemoryResult, completion: @escaping () -> Void) {
-    let channel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.MemoryCallback.onReceivedMemoryInfo", binaryMessenger: binaryMessenger, codec: codec)
-    channel.sendMessage([resultArg] as [Any?]) { _ in
-      completion()
+      sumChannel.setMessageHandler(nil)
     }
   }
 }
