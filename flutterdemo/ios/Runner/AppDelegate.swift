@@ -9,24 +9,9 @@ import Flutter
   ) -> Bool {
     let controller: FlutterViewController = wind
     GeneratedPluginRegistrant.register(with: self)
+      
+    MemoryApiSetup.setUp(binaryMessenger: controller.binaryMessenger, api: MyAPI())
+      
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-
-
   }
 }
-
-import SystemConfiguration.CaptiveNetwork
-
-func getWiFiList() -> Array<String> {
-    var wifiList = Array<String>()
-    if let interfaceNames = CNCopySupportedInterfaces() as NSArray? {
-        for interfaceName in interfaceNames {
-            if let interfaceInfo = CNCopyCurrentNetworkInfo(interfaceName as! CFString) as NSDictionary? {
-                let ssid = interfaceInfo[kCNNetworkInfoKeySSID as String] as? String ?? ""
-                wifiList.append(ssid)
-            }
-        }
-    }
-    return wifiList
-}
-
