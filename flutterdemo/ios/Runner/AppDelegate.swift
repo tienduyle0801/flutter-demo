@@ -8,13 +8,13 @@ import Flutter
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     let controller: FlutterViewController = window?.rootViewController as!FlutterViewController
-      SumApiSetup.setUp(binaryMessenger: controller.binaryMessenger, api:   MyAPI())
+      SumApiSetup.setUp(binaryMessenger: controller.binaryMessenger, api:   TotalNumber())
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
     
 }
 
-public class MyAPI: SumApi {
+public class TotalNumber: SumApi {
     func sum(request: SumRequest) throws -> SumReply? {
         let num1 = request.a ?? 0
         let num2 = request.b ?? 0
